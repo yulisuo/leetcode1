@@ -16,59 +16,47 @@ public class AlertUseKeyCard {
         for (int i = 0; i < keyName.length; i++) {
             records[i] = new Record(keyName[i], keyTime[i]);
         }
+        // 排序后name是挨着的，时间是从小到大
         Arrays.sort(records, new RecordComparator());
 
         String lastName = records[0].name;
         int lastIndex = 0;
 
-
         for (int i = 1; i < records.length; i++) {
             String currentName = records[i].name;
-            if (i == records.length - 1 || !currentName.equals(lastName)) {
-                if (inOneHour(Arrays.copyOfRange(records, lastIndex, (i == records.length - 1) ? records.length : i))) {
+            boolean isLastOne = (i == records.length - 1);
+            if (isLastOne || !currentName.equals(lastName)) {
+                if (inOneHour(Arrays.copyOfRange(records, lastIndex, isLastOne ? records.length : i))) {
                     ret.add(lastName);
                 }
                 lastName = currentName;
                 lastIndex = i;
             }
         }
-
-        Collections.sort(ret);
-
+//        Collections.sort(ret);
         return ret;
     }
-
-
 
     /**
      * @param records 某人的时间列表，无序
      * @return 是不是存在一个小时3次
      */
     private boolean inOneHour(Record[] records) {
-        Time[] t = new Time[records.length];
-        for (int i = 0; i < records.length; i++) {
-            t[i] = records[i].time;
-        }
-        Arrays.sort(t, new Comparator<Time>() {
-            @Override
-            public int compare(Time o1, Time o2) {
-                if (o1.hour == o2.hour) {
-                    return o1.min - o2.min;
-                }
-                return o1.hour - o2.hour;
+        if (records.length > 2) {
+            Time[] times = new Time[records.length];
+            for (int i = 0; i < records.length; i++) {
+                times[i] = records[i].time;
             }
-        });
-        if (t.length > 2) {
-            for (int i = 0; i < t.length -2; i++) {
-                Time t1 = t[i];
-                Time t2 = t[i + 1];
-                Time t3 = t[i + 2];
+
+            for (int i = 0; i < times.length -2; i++) {
+                Time t1 = times[i];
+                Time t2 = times[i + 1];
+                Time t3 = times[i + 2];
                 if (t1.inOneHour(t2) && t1.inOneHour(t3)) {
                     return true;
                 }
             }
         }
-
         return false;
     }
 
@@ -79,14 +67,19 @@ public class AlertUseKeyCard {
             this.name = name;
             this.time = new Time(time);
         }
-
-
     }
 
     static class RecordComparator implements Comparator<Record> {
         @Override
         public int compare(Record o1, Record o2) {
-            return o1.name.compareTo(o2.name);
+            if (o1.name.equals(o2.name)) {
+                if (o1.time.hour == o2.time.hour) {
+                    return o1.time.min - o2.time.min;
+                }
+                return o1.time.hour - o2.time.hour;
+            } else {
+                return o1.name.compareTo(o2.name);
+            }
         }
     }
 
@@ -98,6 +91,11 @@ public class AlertUseKeyCard {
             min = Integer.parseInt(s.substring(s.indexOf(':') + 1, s.length()));
         }
 
+        // t应该晚于当前对象
+        public boolean inOneHour(Time t) {
+            return t.hour == hour || (t.hour - hour == 1 && t.min <= min);
+        }
+
         @Override
         public String toString() {
             return "Time{" +
@@ -105,36 +103,10 @@ public class AlertUseKeyCard {
                     ", min=" + min +
                     '}';
         }
-
-        // t应该晚于当前对象
-        public boolean inOneHour(Time t) {
-            return t.hour == hour || (t.hour - hour == 1 && t.min <= min);
-        }
     }
 
     public static void main(String[] args) {
 
-//        String[] s1 = new String[]{"a","a","a","a","a","b","b","b","b","b","b"};
-//        String[] s2 = new String[]{"23:20","11:09","23:30","23:02","15:28","22:57","23:40","03:43","21:55","20:38","00:19"};
-        String[] s1 = new String[]{"leslie","leslie","leslie","clare","clare","clare","clare"};
-        String[] s2 = new String[]{"13:00","13:20","14:00","18:00","18:51","19:30","19:49"};
-        Utils.print(new AlertUseKeyCard().alertNames(s1, s2));
-//        Utils.print("" + new AlertUseKeyCard().inOneHour(new String[]{"21:00","21:20","21:30","23:00"}));
-//        Utils.print("" + new Time("10:00").inOneHour(new Time("11:00")));
-
-//        Time[] t = new Time[]{new Time("1:22"), new Time("5:08"), new Time("1:40"), new Time("4:08") };
-//        Arrays.sort(t, new Comparator<Time>() {
-//            @Override
-//            public int compare(Time o1, Time o2) {
-//                if (o1.hour == o2.hour) {
-//                    return o1.min - o2.min;
-//                }
-//                return o1.hour - o2.hour;
-//            }
-//        });
-//        for (Time t0 : t) {
-//            Utils.print(t0 + "");
-//        }
     }
 
 }
